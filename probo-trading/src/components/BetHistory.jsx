@@ -1,22 +1,18 @@
-import React from 'react';
+import React from "react";
+
 const BetHistory = ({ history }) => {
   return (
-    <div style={historyStyle}>
-      <h3>Bet History</h3>
+    <div>
+      <h2>Bet History</h2>
       <ul>
         {history.map((bet, index) => (
           <li key={index}>
-            Bet: {bet.option} - Result: {bet.result ? 'Win' : 'Loss'}
+            {bet.question} - Bet: {bet.option} ({bet.amount} units) - Result: {bet.result ? "Win ✅" : "Lose ❌"}
           </li>
         ))}
       </ul>
     </div>
   );
-};
-
-const historyStyle = {
-  marginTop: '30px',
-  textAlign: 'center',
 };
 
 export default BetHistory;
