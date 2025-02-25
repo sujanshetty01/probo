@@ -1,29 +1,39 @@
 const express = require("express");
 const Bet = require("../models/Bet");
-const User = require("../models/user");
 
 const router = express.Router();
 
-// Place Bet
+// ✅ Place a new bet
 router.post("/place", async (req, res) => {
-  const { userId, question, amount, option } = req.body;
+  try {
+    const { user, market, amount, odds } = req.body;
 
-  const user = await User.findById(userId);
-  if (user.balance < amount) return res.status(400).json({ message: "Insufficient balance" });
+    if (!user || !market || !amount || !odds) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-  user.balance -= amount;
-  await user.save();
+    const newBet = new Bet({
+      user,
+      market,
+      amount,
+      odds,
+    });
 
-  const newBet = new Bet({ userId, question, amount, option, result: "Pending" });
-  await newBet.save();
-
-  res.json({ message: "Bet placed!", newBet });
+    await newBet.save();
+    res.status(201).json({ message: "Bet placed successfully", bet: newBet });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 });
 
-// Get User Bets
-router.get("/:userId", async (req, res) => {
-  const bets = await Bet.find({ userId: req.params.userId });
-  res.json(bets);
+// ✅ Get all bets
+router.get("/", async (req, res) => {
+  try {
+    const bets = await Bet.find().populate("user", "username");
+    res.json(bets);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 });
 
 module.exports = router;

@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/auth", require("./routes/authroutes"));
 app.use("/api/bets", require("./routes/betRoutes"));
 
 // WebSocket connection for live betting
