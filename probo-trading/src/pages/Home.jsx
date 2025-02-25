@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import BetOption from "../components/BetOption";
 import ResultDisplay from "../components/ResultDisplay";
@@ -6,7 +7,10 @@ import BetHistory from "../components/BetHistory";
 
 const socket = io("http://localhost:5000"); // Connect to backend
 
-const Home = ({ balance, setBalance }) => {
+const Home = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [balance, setBalance] = useState(0);
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [betAmount, setBetAmount] = useState("");
@@ -15,17 +19,31 @@ const Home = ({ balance, setBalance }) => {
   const [betHistory, setBetHistory] = useState([]);
   const [odds, setOdds] = useState({ Yes: 1.8, No: 2.0 }); // Default odds
 
-  // Fetch live odds from backend
+  // Check user authentication
   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser) {
+      navigate("/login"); // Redirect if not logged in
+    } else {
+      setUser(storedUser);
+      setBalance(storedUser.balance || 1000); // Default balance if not stored
+    }
+
     socket.on("updateOdds", (data) => {
       setOdds(data.odds);
     });
 
     return () => {
       socket.off("updateOdds"); // Cleanup on unmount
-      socket.disconnect();
     };
-  }, []);
+  }, [navigate]);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   const handlePlaceBet = (option) => {
     const amount = parseInt(betAmount, 10);
@@ -50,13 +68,18 @@ const Home = ({ balance, setBalance }) => {
     const winProbability = option === "Yes" ? 1 / odds.Yes : 1 / odds.No;
     const isWinner = randomValue < winProbability;
 
-    setResult(isWinner);
-    setBalance(isWinner ? balance + amount * odds[option] : balance - amount);
+    const newBalance = isWinner ? balance + amount * odds[option] : balance - amount;
+    setBalance(newBalance);
 
     setBetHistory([
       ...betHistory,
       { question: submittedQuestion, option, amount, result: isWinner },
     ]);
+
+    // Update user balance in localStorage
+    const updatedUser = { ...user, balance: newBalance };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
   };
 
   const handleSubmitQuestion = () => {
@@ -70,6 +93,11 @@ const Home = ({ balance, setBalance }) => {
 
   return (
     <div style={containerStyle}>
+      <div style={headerStyle}>
+        <h2>Welcome, {user?.username}</h2>
+        <button onClick={handleLogout} style={logoutButtonStyle}>Logout</button>
+      </div>
+
       <div style={cardStyle}>
         <h2 style={balanceStyle}>Balance: {balance} units</h2>
 
@@ -139,6 +167,24 @@ const containerStyle = {
   padding: "20px",
 };
 
+const headerStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  width: "60%",
+  padding: "10px",
+  alignItems: "center",
+};
+
+const logoutButtonStyle = {
+  padding: "10px 20px",
+  backgroundColor: "#ff4d4d",
+  color: "white",
+  border: "none",
+  cursor: "pointer",
+  borderRadius: "5px",
+  fontSize: "1em",
+};
+
 const cardStyle = {
   width: "60%",
   backgroundColor: "#ffffff",
@@ -181,10 +227,6 @@ const buttonStyle = {
   borderRadius: "8px",
   fontSize: "1em",
   transition: "0.3s",
-};
-
-buttonStyle[":hover"] = {
-  backgroundColor: "#45a049",
 };
 
 const betButtonsContainer = {
