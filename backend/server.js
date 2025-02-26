@@ -13,29 +13,36 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000", // Frontend URL
-    methods: ["GET", "POST"],
-  },
-});
 
-app.use(cors());
-app.use(express.json());
+// ✅ Improved CORS Configuration
+const corsOptions = {
+  origin: "http://localhost:5173", // Frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true, // Allow credentials (cookies, authorization headers)
+};
+
+app.use(cors(corsOptions));
+app.use(express.json()); // Middleware to parse JSON data
 
 // API Routes
 app.use("/api/auth", require("./routes/authroutes"));
 app.use("/api/bets", require("./routes/betRoutes"));
 
-// WebSocket connection for live betting
+// ✅ Improved WebSocket Configuration (Fix CORS issues)
+const io = new Server(server, {
+  cors: corsOptions,
+});
+
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
+  // Listen for a new bet
   socket.on("placeBet", (data) => {
     console.log("Bet Placed:", data);
     io.emit("updateOdds", { odds: Math.random() * 2 }); // Dummy odds update
   });
 
+  // Handle disconnection
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
@@ -43,4 +50,4 @@ io.on("connection", (socket) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

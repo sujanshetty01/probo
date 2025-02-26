@@ -42,8 +42,9 @@ const Home = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate("/login"); // Redirect to login after logout
   };
+  
 
   const handlePlaceBet = (option) => {
     const amount = parseInt(betAmount, 10);

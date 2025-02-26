@@ -17,25 +17,26 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+  
     try {
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
+  
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Signup failed");
       }
-
+  
       alert("Signup successful! Please login.");
-      navigate("/login");
+      navigate("/login"); // Redirect to login after signup
     } catch (err) {
       setError(err.message);
     }
   };
+  
 
   return (
     <div style={styles.container}>

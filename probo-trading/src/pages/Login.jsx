@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Dashboard from "./Dashboard";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -13,25 +14,31 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+  
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
+  
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-
-      alert("Login successful!");
-      navigate("/");
+  
+      // Store token and user data
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+  
+      // Redirect to dashboard
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
   };
+  
+  
 
   return (
     <div style={styles.container}>

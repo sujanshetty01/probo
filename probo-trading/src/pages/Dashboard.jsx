@@ -1,30 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = ({ balance, setBalance }) => {
-  const [amount, setAmount] = useState('');
-
+  const [amount, setAmount] = useState("");
   const navigate = useNavigate();
 
+  // Ensure balance is always defined
   useEffect(() => {
-    const storedBalance = localStorage.getItem('balance');
-    if (storedBalance) {
-      setBalance(parseInt(storedBalance, 10));
+    const storedBalance = localStorage.getItem("balance");
+    if (storedBalance !== null) {
+      setBalance(parseInt(storedBalance, 10) || 0);
+    } else {
+      setBalance(0); // Set default balance to 0 if not in localStorage
     }
   }, [setBalance]);
 
   const handleTransaction = (type) => {
     const amountValue = parseInt(amount, 10);
+
     if (isNaN(amountValue) || amountValue <= 0) {
       alert("Enter a valid amount!");
       return;
     }
 
-    let newBalance = balance;
+    let newBalance = balance || 0; // Ensure balance is never undefined
+
     if (type === "deposit") {
       newBalance += amountValue;
     } else if (type === "withdraw") {
-      if (amountValue > balance) {
+      if (amountValue > newBalance) {
         alert("Insufficient balance!");
         return;
       }
@@ -32,8 +36,9 @@ const Dashboard = ({ balance, setBalance }) => {
     }
 
     setBalance(newBalance);
-    localStorage.setItem('balance', newBalance);
-    setAmount('');
+    localStorage.setItem("balance", newBalance.toString());
+    setAmount("");
+
     alert(`${type === "deposit" ? "Deposited" : "Withdrew"} ${amountValue} units!`);
   };
 
@@ -41,7 +46,9 @@ const Dashboard = ({ balance, setBalance }) => {
     <div className="container">
       <div className="card">
         <h1>Dashboard</h1>
-        <p>Current Balance: <span>${balance}</span></p>
+        <p>
+          Current Balance: <span>${(balance || 0).toLocaleString()}</span>
+        </p>
 
         <input
           type="number"
@@ -58,7 +65,7 @@ const Dashboard = ({ balance, setBalance }) => {
           Withdraw
         </button>
 
-        <button onClick={() => navigate('/home')} className="button trade-button">
+        <button onClick={() => navigate("/home")} className="button trade-button">
           Start Trading
         </button>
       </div>
